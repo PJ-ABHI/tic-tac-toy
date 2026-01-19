@@ -1,6 +1,7 @@
 <script>
   import { fade, scale, fly } from "svelte/transition";
   import { elasticOut } from "svelte/easing";
+  import { getBestMove } from "./lib/ai";
 
   let board = Array(9).fill(null);
   let turn = "X";
@@ -10,6 +11,7 @@
   // Player state
   let playerXName = "";
   let playerOName = "";
+  let isVsAI = false;
   let gameStarted = false;
   let scoreX = 0;
   let scoreO = 0;
@@ -41,11 +43,9 @@
     return null;
   };
 
-  const handleClick = (i) => {
-    if (board[i] || winner) return;
-
+  const processMove = (i, player) => {
     const newBoard = [...board];
-    newBoard[i] = turn;
+    newBoard[i] = player;
     board = newBoard;
 
     const result = checkWinner(board);
@@ -55,7 +55,29 @@
       if (winner === "X") scoreX++;
       if (winner === "O") scoreO++;
     } else {
-      turn = turn === "X" ? "O" : "X";
+      turn = player === "X" ? "O" : "X";
+    }
+  };
+
+  const playAI = async () => {
+    if (winner) return;
+    // Small delay for realism
+    await new Promise((r) => setTimeout(r, 500));
+
+    const move = getBestMove(board, "O");
+    if (move && move.index !== undefined) {
+      processMove(move.index, "O");
+    }
+  };
+
+  const handleClick = (i) => {
+    if (board[i] || winner) return;
+    if (isVsAI && turn === "O") return;
+
+    processMove(i, turn);
+
+    if (isVsAI && !winner && turn === "O") {
+      playAI();
     }
   };
 
@@ -68,7 +90,11 @@
 
   const startGame = () => {
     playerXName = playerXName.trim() || "Player 1";
-    playerOName = playerOName.trim() || "Player 2";
+    if (isVsAI) {
+      playerOName = "AI";
+    } else {
+      playerOName = playerOName.trim() || "Player 2";
+    }
     gameStarted = true;
     resetGame();
     scoreX = 0;
@@ -91,6 +117,12 @@
   {#if !gameStarted}
     <div class="start-screen glass-card" in:fade>
       <h2>Enter Player Names</h2>
+      <div class="mode-toggle">
+        <label>
+          <input type="checkbox" bind:checked={isVsAI} />
+          Play against AI
+        </label>
+      </div>
       <div class="input-group">
         <label for="p1" class="x-text">Player X</label>
         <input
@@ -102,12 +134,16 @@
       </div>
       <div class="input-group">
         <label for="p2" class="o-text">Player O</label>
-        <input
-          id="p2"
-          type="text"
-          placeholder="Enter Name"
-          bind:value={playerOName}
-        />
+        {#if isVsAI}
+          <input id="p2" type="text" value="AI" disabled class="ai-input" />
+        {:else}
+          <input
+            id="p2"
+            type="text"
+            placeholder="Enter Name"
+            bind:value={playerOName}
+          />
+        {/if}
       </div>
       <button class="start-btn" on:click={startGame}>Start Match</button>
     </div>
@@ -398,5 +434,33 @@
 
   .quit-btn:hover {
     background: rgba(239, 68, 68, 0.3);
+  }
+
+  /* AI Toggle Styles */
+  .mode-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .mode-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .mode-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+  }
+
+  .ai-input {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.1) !important;
   }
 </style>
