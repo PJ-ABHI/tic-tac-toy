@@ -1,5 +1,5 @@
 
-export function getBestMove(board, aiPlayer = "O") {
+export function getBestMove(board, aiPlayer = "O", difficulty = "top") {
     const huPlayer = aiPlayer === "O" ? "X" : "O";
 
     // Helper to check for a win within the simulation
@@ -70,9 +70,29 @@ export function getBestMove(board, aiPlayer = "O") {
         return moves[bestMove];
     };
 
-    // If first move, pick center or random corner to save time and add variety, although minimax is fast enough.
-    // But let's just run minimax, it's 3x3.
-    // Small optimization/variety: if board is empty, pick a random move? No, let's play optimal.
+    const availSpots = board.map((v, i) => (v === null ? i : null)).filter((v) => v !== null);
+    if (availSpots.length === 0) return null;
+
+    // Helper to get a random move
+    const getRandomMove = () => {
+        const randomIndex = Math.floor(Math.random() * availSpots.length);
+        return { index: availSpots[randomIndex] };
+    };
+
+    // Make mistakes based on difficulty
+    // beginner: 30% chance of optimal move (70% random)
+    // middle: 70% chance of optimal move (30% random)
+    // top: 100% chance of optimal move
+
+    const randomChance = Math.random();
+
+    let threshold = 1.0; // Default to top (always optimal)
+    if (difficulty === 'beginner') threshold = 0.3;
+    if (difficulty === 'middle') threshold = 0.7;
+
+    if (randomChance > threshold) {
+        return getRandomMove();
+    }
 
     return minimax(board, aiPlayer);
 }

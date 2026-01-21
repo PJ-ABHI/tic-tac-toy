@@ -12,6 +12,7 @@
   let playerXName = "";
   let playerOName = "";
   let isVsAI = false;
+  let difficulty = "top";
   let gameStarted = false;
   let scoreX = 0;
   let scoreO = 0;
@@ -64,7 +65,7 @@
     // Small delay for realism
     await new Promise((r) => setTimeout(r, 500));
 
-    const move = getBestMove(board, "O");
+    const move = getBestMove(board, "O", difficulty);
     if (move && move.index !== undefined) {
       processMove(move.index, "O");
     }
@@ -123,6 +124,25 @@
           Play against AI
         </label>
       </div>
+      {#if isVsAI}
+        <div class="difficulty-group" in:fade>
+          <span class="label">Difficulty</span>
+          <div class="difficulty-options">
+            <button
+              class:selected={difficulty === "beginner"}
+              on:click={() => (difficulty = "beginner")}>Beginner</button
+            >
+            <button
+              class:selected={difficulty === "middle"}
+              on:click={() => (difficulty = "middle")}>Middle</button
+            >
+            <button
+              class:selected={difficulty === "top"}
+              on:click={() => (difficulty = "top")}>Top</button
+            >
+          </div>
+        </div>
+      {/if}
       <div class="input-group">
         <label for="p1" class="x-text">Player X</label>
         <input
@@ -462,5 +482,52 @@
     opacity: 0.7;
     cursor: not-allowed;
     background: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Difficulty Selector */
+  .difficulty-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+  }
+
+  .difficulty-group .label {
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-left: 2px;
+  }
+
+  .difficulty-options {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.3rem;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+  }
+
+  .difficulty-options button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .difficulty-options button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+  }
+
+  .difficulty-options button.selected {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   }
 </style>
